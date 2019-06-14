@@ -1,0 +1,49 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: fees
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fees
+  template:
+    metadata:
+      labels:
+        app: fees
+    spec:
+        containers:
+        - name: dccn-fees
+          image: 815280425737.dkr.ecr.us-west-2.amazonaws.com/dccn-fees:feat
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50051
+          env:
+          - name: DB_COLLECTION
+            value: datacenter
+          - name: DB_HOST
+            value: datastore:27017
+          - name: DB_NAME
+            value: dccn
+          - name: DB_POOL_LIMIT
+            value: "4096"
+          - name: DB_TIMEOUT
+            value: "5"
+          - name: MICRO_BROKER
+            value: rabbitmq
+          - name: MICRO_BROKER_ADDRESS
+            value: amqp://guest:guest@broker:5672
+          - name: MICRO_REGISTER_TTL
+            value: "30"
+          - name: MICRO_REGISTER_INTERVAL
+            value: "20"
+          - name: MICRO_REGISTRY
+            value: consul
+          - name: MICRO_REGISTRY_ADDRESS
+            value: consul:8500
+          - name: MICRO_SERVER_ADDRESS
+            value: :50051
+          - name: MICRO_SERVER_VERSION
+            value: v1.0
+
+
