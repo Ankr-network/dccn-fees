@@ -4,6 +4,7 @@ import (
 	"github.com/Ankr-network/dccn-common/protos/dcmgr/v1/grpc"
 	"github.com/Ankr-network/dccn-common/util"
 	"github.com/Ankr-network/dccn-fees/db-service"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"golang.org/x/net/context"
 	"log"
 	"strconv"
@@ -217,6 +218,7 @@ func (p *Handler) UserHistoryFeesList(ctx context.Context, req *dcmgr.HistoryFee
 		ns.Invoice = record.ID
 		ns.Method = "ERC20"
 		ns.PaymentDate = strconv.FormatInt(record.PaidDate.Seconds, 10 )
+		ns.PaymentStatus = p.db.ConvertClearingStatus(record.Status)
 
 		log.Printf("record %+v \n", ns)
 	    rsp.Records = append(rsp.Records, &ns)
@@ -229,6 +231,15 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 
 	now := time.Now()
 	currentLocation := now.UTC().Location()
+
+	if len(req.Uid) == 0 {
+		log.Printf("error for MonthFeesDetail, uid is empty")
+		return rsp, nil
+	}
+
+	if len(req.Month) == 0 {
+		return p.CacluateCurrentMonthFees(req.Uid)
+	}
 
 
 	s := strings.Split(req.Month, "-")
@@ -272,3 +283,163 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 
 	return rsp, nil
 }
+
+func (p *Handler) CacluateCurrentMonthFees(uid string)(*dcmgr.FeesDetailResponse, error){
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.UTC().Location()
+
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+	startLastMonth := firstOfMonth.AddDate(0, -1, 0)
+	endlastMonth := firstOfMonth.AddDate(0, 0, 0)
+
+	endlastMonth = endlastMonth.Add(-time.Second)
+
+
+	start := startLastMonth.Unix()
+	end := endlastMonth.Unix()
+	list, _  := p.db.GetDailyFeesWithTimeSpanAndUid(uid, start, end)
+
+	records := make(map[string]*dbservice.MonthlyFeesRecord, 0)
+
+	log.Printf("total record of daily fees %d  from %d to %d  \n", len(records), start, end)
+
+	for _, record :=range *list {
+
+
+		namespace := record.Namespace
+		if record.UserType == dbservice.ClusterProvider {
+			namespace = record.ClusterId
+		}
+
+		log.Printf("name space %s ", namespace)
+
+		value, ok := records[namespace]
+
+		if ok {
+			value.Usage.CpuUsed += record.Usage.CpuUsed
+			value.Usage.MemoryUsed += record.Usage.MemoryUsed
+			value.Usage.StorageUsed += record.Usage.StorageUsed
+			value.Count += 1
+			value.Fees += record.Fees
+		} else {
+
+			r := dbservice.MonthlyFeesRecord{}
+			r.Usage = record.Usage
+			r.Namespace = record.Namespace
+			r.UserType = record.UserType
+			r.Month = start
+			r.UID = record.UID
+			r.Fees = record.Fees
+			r.Count = 1
+
+			now := time.Now().Unix()
+			r.CreateDate = &timestamp.Timestamp{Seconds: now}
+
+			records[namespace] = &r
+		}
+	}
+
+
+	r := dbservice.MonthlyClearing{}
+	user, _ := p.db.GetUser(uid)
+
+
+	r.Namespace = make(map[string]int32)
+	r.UserType = 0
+	r.Month = start
+	r.CreateDate =  &timestamp.Timestamp{Seconds: now.Unix()}
+	r.Start =   &timestamp.Timestamp{Seconds: start}
+	r.End =  &timestamp.Timestamp{Seconds: end}
+	r.PaidDate = &timestamp.Timestamp{Seconds: 0}
+	r.UID = uid
+	if user != nil {
+		r.Name = user.Name
+	}
+	r.Charge = 0
+	r.Status = dbservice.UnPaid
+
+	count := 0;
+	for _ , v := range records {
+		v.Usage.CpuUsed += v.Usage.CpuUsed/v.Count
+		v.Usage.MemoryUsed += v.Usage.MemoryUsed/v.Count
+		v.Usage.StorageUsed += v.Usage.StorageUsed/v.Count
+
+		if count == 0 {
+			r.Namespace[v.Namespace] = v.Fees
+			r.UserType = v.UserType
+			r.Charge = v.Fees
+			//r.Usage = record.Usage
+		}else{
+
+			r.Namespace[v.Namespace] = v.Fees
+			r.Charge += v.Fees
+		}
+		count++
+	}
+
+	r.Total = r.Charge
+
+	rsp := &dcmgr.FeesDetailResponse{}
+
+
+	rsp.Start = strconv.FormatInt(r.Start.Seconds, 10)
+	rsp.End = strconv.FormatInt(r.End.Seconds, 10)
+	rsp.Account = r.UID
+	rsp.Attn = r.Name
+	rsp.Credits = r.Credit
+	rsp.InvoiceNumber = r.ID
+	rsp.Tax = r.Tax
+	rsp.Total = r.Total
+	rsp.Charges = r.Charge
+	rsp.IssueDate = strconv.FormatInt(r.CreateDate.Seconds, 10)
+	rsp.NsFees = make([]*dcmgr.NamespaceFees, 0)
+	for k, v := range r.Namespace {
+		ns := dcmgr.NamespaceFees{Name:k, Charge:v}
+		rsp.NsFees = append(rsp.NsFees , &ns)
+	}
+
+    return rsp, nil
+}
+
+
+func (p *Handler) InvoiceDetail(ctx context.Context, req *dcmgr.InvoiceDetailRequest) (*dcmgr.FeesDetailResponse, error){
+	rsp := &dcmgr.FeesDetailResponse{}
+
+    invoice_id := req.InvoiceId
+    record, error := p.db.GetClearingRecord(invoice_id)
+
+    if error != nil {
+		log.Printf("MonthFeesDetail error %s \n", error.Error())
+		return  rsp, nil
+	}
+
+    if record.UID != req.Uid {
+		log.Printf("MonthFeesDetail error Uid[%s] !=  record's Uid [%s] \n", req.Uid, record.UID)
+		return  rsp, nil
+	}
+
+	if error == nil && record.UID == req.Uid {
+		rsp.Start = strconv.FormatInt(record.Start.Seconds, 10)
+		rsp.End = strconv.FormatInt(record.End.Seconds, 10)
+		rsp.Account = record.UID
+		rsp.Attn = record.Name
+		rsp.Credits = record.Credit
+		rsp.InvoiceNumber = record.ID
+		rsp.Tax = record.Tax
+		rsp.Total = record.Total
+		rsp.Charges = record.Charge
+		rsp.IssueDate = strconv.FormatInt(record.CreateDate.Seconds, 10)
+		rsp.NsFees = make([]*dcmgr.NamespaceFees, 0)
+		for k, v := range record.Namespace {
+			ns := dcmgr.NamespaceFees{Name:k, Charge:v}
+			rsp.NsFees = append(rsp.NsFees , &ns)
+		}
+	}else{
+
+
+	}
+
+	return rsp, nil
+}
+

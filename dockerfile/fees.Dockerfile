@@ -14,6 +14,5 @@ RUN echo '0 2 * * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/dai
 RUN echo '0 3 1 * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/monthly-fees.go  >>/var/log/monthly.log & ' >> /etc/crontabs/root
 RUN echo '0 4 1 * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/monthly-clear.go  >>/var/log/monthly_clear.log & ' >> /etc/crontabs/root
 
-CMD ['crond', '-l 2', '-f']
 
-CMD ["cmd/fees"]
+CMD ["cmd/fees",  "&&", "/usr/sbin/crond -f"]
