@@ -113,7 +113,11 @@ func main() {
 		} else {
 			now := time.Now()
             //log.Printf("process uid %s \n", record.UID)
-			user, _ := dccn_fees.GetUser(record.UID)
+			user, error := dccn_fees.GetUser(record.UID)
+
+			if error != nil {
+				continue
+			}
 
 			r := dbservice.MonthlyClearing{}
 			//r.Usage = record.Usage

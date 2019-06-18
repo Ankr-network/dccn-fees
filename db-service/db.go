@@ -41,10 +41,12 @@ type DBService interface {
 	GetDailyFeesWithUidAndDate(uid string, date int64, namespace string) (*DailyFeesRecord, error)
 	GetMonthlyClearing(uid string, date int64) (*MonthlyClearing, error)
 	GetDailyFeesWithTimeSpan(start int64, end int64)(*[]*DailyFeesRecord, error)
+	GetDailyFeesWithTimeSpanAndUid(uid string, start int64, end int64)(*[]*DailyFeesRecord, error)
 	GetMonthFeesWithTimeSpan(start int64, end int64)(*[]*MonthlyFeesRecord, error)
 	GetMonthClearingWithTimeSpan(uid string, start int64, end int64)(*[]*MonthlyClearing, error)
 	GetTotalIncome(uid string) int
 	GetClearingRecord(id string) (*MonthlyClearing, error)
+	ConvertClearingStatus(status ClearingStatus) string
 	Close()
 }
 
@@ -173,6 +175,11 @@ func (p *DB) Close() {
 // Create creates a new data center item if it not exists
 func (p *DB) InsertDailyFees(record *DailyFeesRecord) error {
 
+	if len(record.UID) == 0 {
+		log.Printf("InsertDailyFees error, uid does not exist.")
+		return nil
+	}
+
 	_, error := p.GetDailyFeesWithUidAndDate(record.UID, record.Date, record.Namespace)
 	if error == nil { //exit old record
 		log.Printf("----> update record %+v \n", record)
@@ -299,6 +306,18 @@ func (p *DB)GetDailyFeesWithTimeSpan(start int64, end int64)(*[]*DailyFeesRecord
 }
 
 
+func (p *DB)GetDailyFeesWithTimeSpanAndUid(uid string, start int64, end int64)(*[]*DailyFeesRecord, error){
+	var list []*DailyFeesRecord
+	if err :=  p.daily.Find(bson.M{ "uid":uid,  "date" : 	bson.M{
+		"$gte": start,
+		"$lt": end,
+	}}).All(&list); err != nil {
+		return nil, err
+	}
+	return &list, nil
+}
+
+
 
 
 func (p *DB) GetNamespace(namespaceId string) (*NamespaceRecord, error) {
@@ -307,8 +326,6 @@ func (p *DB) GetNamespace(namespaceId string) (*NamespaceRecord, error) {
 	if err :=  p.namespace.Find(bson.M{"id": namespaceId}).One(&record); err != nil {
 		return &record, err
 	}
-
-	record.UID = "1234"
 
 	return &record , nil
 }
@@ -373,11 +390,20 @@ func (p *DB) GetMonthClearingWithTimeSpan(uid string, start int64, end int64)(*[
 
 func (p *DB) GetClearingRecord(id string) (*MonthlyClearing, error){
 	var record MonthlyClearing
-	err := p.user.Find(bson.M{"id": id}).One(&record)
+	err := p.clearing.Find(bson.M{"id": id}).One(&record)
 	if err != nil {
 		return nil, errors.New(ankr_default.DbError+err.Error())
 	}
 	return &record, nil
+
+}
+
+func  (p *DB)ConvertClearingStatus(status ClearingStatus) string{
+	if status == 1 {
+		return "Paid"
+	}
+
+	return "Unpaid"
 
 }
 

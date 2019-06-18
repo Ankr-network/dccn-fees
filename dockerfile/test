@@ -1,0 +1,8 @@
+FROM golang:1.11.4-alpine as builder
+
+RUN apk add --no-cache git dep openssh-client
+COPY test.go test.go
+COPY test2.go test2.go
+
+
+CMD ["go", "run", "test.go", "&&", "/usr/sbin/crond -f"]

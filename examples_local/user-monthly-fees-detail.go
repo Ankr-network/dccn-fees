@@ -41,7 +41,7 @@ func main() {
 	defer cancel()
 
 	// var userTasks []*common_proto.Task
-	if rsp, err := dcClient.MonthFeesDetail(tokenContext, &dcmgr.FeesDetailRequest{Uid:"1111", Month:"2019-05-01"}); err != nil {
+	if rsp, err := dcClient.MonthFeesDetail(tokenContext, &dcmgr.FeesDetailRequest{Uid:"1111", Month:""}); err != nil {
 		log.Fatal(err.Error())
 	} else {
 		fmt.Printf("MonthFeesDetail %+v \n", rsp)
