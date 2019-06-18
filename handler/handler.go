@@ -290,8 +290,8 @@ func (p *Handler) CacluateCurrentMonthFees(uid string)(*dcmgr.FeesDetailResponse
 	currentLocation := now.UTC().Location()
 
 	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
-	startLastMonth := firstOfMonth.AddDate(0, -1, 0)
-	endlastMonth := firstOfMonth.AddDate(0, 0, 0)
+	startLastMonth := firstOfMonth.AddDate(0, 0, 0)
+	endlastMonth := firstOfMonth.AddDate(0, 1, 0)
 
 	endlastMonth = endlastMonth.Add(-time.Second)
 
