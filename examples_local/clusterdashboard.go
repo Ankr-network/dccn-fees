@@ -41,7 +41,7 @@ func main() {
 	defer cancel()
 
 	// var userTasks []*common_proto.Task
-	if rsp, err := dcClient.ClusterDashBoard(tokenContext, &dcmgr.DashBoardRequest{Uid:"admin9880"}); err != nil {
+	if rsp, err := dcClient.ClusterDashBoard(tokenContext, &dcmgr.DashBoardRequest{Uid:"57a50ca4-5799-42c2-aab2-a532ec8d6965"}); err != nil {
 		log.Fatal(err.Error())
 	} else {
 		fmt.Printf("total income %d  days of one week %d \n", rsp.TotalIncome, len(rsp.Week))

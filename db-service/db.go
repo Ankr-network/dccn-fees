@@ -47,6 +47,7 @@ type DBService interface {
 	GetTotalIncome(uid string) int
 	GetClearingRecord(id string) (*MonthlyClearing, error)
 	ConvertClearingStatus(status ClearingStatus) string
+	GetClusterByUserID(uid string) (*DataCenterRecord, error)
 	Close()
 }
 
@@ -353,7 +354,7 @@ func (p *DB) GetMonthFeesWithTimeSpan(start int64, end int64)(*[]*MonthlyFeesRec
 
 
 func (p *DB)GetTotalIncome(uid string) int {
-	pipe := p.daily.Pipe([]bson.M{bson.M{"$match": bson.M{"uid": "admin"}},bson.M{"$group": bson.M{"_id": "$uid",
+	pipe := p.daily.Pipe([]bson.M{bson.M{"$match": bson.M{"uid": uid}},bson.M{"$group": bson.M{"_id": "$uid",
 		 "total": bson.M{"$sum": "$fees"}}}})
 	resp := []bson.M{}
 	iter := pipe.Iter()
@@ -376,6 +377,7 @@ func (p *DB) GetUser(id string) (*UserRecord, error) {
 }
 
 func (p *DB) GetMonthClearingWithTimeSpan(uid string, start int64, end int64)(*[]*MonthlyClearing, error){
+	log.Printf("GetMonthClearingWithTimeSpan  uid %s start %d end %d \n", uid, start, end)
 	var list []*MonthlyClearing
 	if err :=  p.clearing.Find(bson.M{ "uid" : uid ,  "month" : 	bson.M{
 		"$gte": start,
@@ -407,6 +409,17 @@ func  (p *DB)ConvertClearingStatus(status ClearingStatus) string{
 
 }
 
+
+func (p *DB) GetClusterByUserID(uid string) (*DataCenterRecord, error) {
+	var center DataCenterRecord
+	log.Printf("GetClusterByUserID uid %s \n", uid)
+	err := p.cluser.Find(bson.M{"userid": uid}).One(&center)
+	if err != nil {
+		return nil, errors.New(ankr_default.DbError+err.Error())
+	}
+	log.Printf("cluster %+v \n", center)
+	return &center, err
+}
 
 
 

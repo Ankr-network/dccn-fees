@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
 	"github.com/Ankr-network/dccn-common/protos/dcmgr/v1/grpc"
-	"github.com/Ankr-network/dccn-common/util"
 	"github.com/Ankr-network/dccn-fees/db-service"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"golang.org/x/net/context"
@@ -28,28 +28,47 @@ func NewHandler(db dbservice.DBService) *Handler {
 	return handler
 }
 
+type Metrics struct {
+	TotalCPU     int64
+	UsedCPU      int64
+	TotalMemory  int64
+	UsedMemory   int64
+	TotalStorage int64
+	UsedStorage  int64
+
+	ImageCount    int64
+	EndPointCount int64
+	NetworkIO     int64 // No data
+}
+
 func (p *Handler) ClusterDashBoard(
 	ctx context.Context, req *dcmgr.DashBoardRequest) (*dcmgr.DashBoardResponse, error) {
-
-	//	log.Printf("context %+v", ctx)
-	uid2 := util.GetUserID(ctx)
-	log.Printf("uid2 %s \n", uid2)
-	//
 	uid := req.Uid
 
-	rsp := dcmgr.DashBoardResponse{}
-	rsp.TotalIncome = int32(p.db.GetTotalIncome(uid))
-
-	log.Printf("total income %d \n", rsp.TotalIncome)
-
-	//todo
+	rsp := &dcmgr.DashBoardResponse{}
 	rsp.CurrentUsage = &dcmgr.Usage{}
-	rsp.CurrentUsage.CpuTotal = 10000
-	rsp.CurrentUsage.CpuUsed = 5000
-	rsp.CurrentUsage.MemoryTotal = 10000
-	rsp.CurrentUsage.MemoryUsed = 50000
-	rsp.CurrentUsage.StorageTotal = 100000
-	rsp.CurrentUsage.StorageUsed = 70000
+	rsp.TotalIncome = -int32(p.db.GetTotalIncome(uid))
+	log.Printf("total income %d  for user [%s] \n", rsp.TotalIncome, uid)
+	cluster, error := p.db.GetClusterByUserID(uid)
+
+	if error != nil {
+		log.Printf("user does not register cluster \n")
+		return rsp, nil
+	}
+
+
+	metrics := Metrics{}
+	if err := json.Unmarshal([]byte(cluster.DcHeartbeatReport.Metrics), &metrics); err != nil {
+		log.Printf("error metrics: metrics is empty  ")
+		return rsp, nil
+	} else {
+		rsp.CurrentUsage.CpuTotal = int32(metrics.TotalCPU)
+		rsp.CurrentUsage.CpuUsed =  int32(metrics.UsedCPU)
+		rsp.CurrentUsage.MemoryTotal = int32(metrics.TotalMemory)
+		rsp.CurrentUsage.MemoryUsed = int32(metrics.UsedMemory)
+		rsp.CurrentUsage.StorageTotal =  int32(metrics.TotalStorage)
+		rsp.CurrentUsage.StorageUsed =  int32(metrics.UsedStorage)
+	}
 
 
 	now := time.Now()
@@ -79,7 +98,7 @@ func (p *Handler) ClusterDashBoard(
 		for _, record :=range *list {
             income := dcmgr.Income{}
             income.Usage = &dcmgr.Usage{}
-			income.Income = record.Fees
+			income.Income = -record.Fees
 			income.Date = record.CreateDate
 
 			income.Usage.CpuTotal = record.Usage.CpuTotal
@@ -117,7 +136,7 @@ func (p *Handler) ClusterDashBoard(
 		for _, record :=range *list {
 			income := dcmgr.Income{}
 			income.Usage = &dcmgr.Usage{}
-			income.Income = record.Fees
+			income.Income = -record.Fees
 			income.Date = record.CreateDate
 
 			income.Usage.CpuTotal = record.Usage.CpuTotal
@@ -156,7 +175,7 @@ func (p *Handler) ClusterDashBoard(
 		for _, record :=range *list {
 			income := dcmgr.Income{}
 			income.Usage = &dcmgr.Usage{}
-			income.Income = record.Fees
+			income.Income = -record.Fees
 			income.Date = record.CreateDate
 
 			income.Usage.CpuTotal = record.Usage.CpuTotal
@@ -170,7 +189,7 @@ func (p *Handler) ClusterDashBoard(
 
 	}
 
-	return &rsp, nil
+	return rsp, nil
 }
 
 
@@ -292,6 +311,7 @@ func (p *Handler) CacluateCurrentMonthFees(uid string)(*dcmgr.FeesDetailResponse
 	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
 	startLastMonth := firstOfMonth.AddDate(0, 0, 0)
 	endlastMonth := firstOfMonth.AddDate(0, 1, 0)
+
 
 	endlastMonth = endlastMonth.Add(-time.Second)
 
