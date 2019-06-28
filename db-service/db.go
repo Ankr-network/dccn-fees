@@ -392,10 +392,13 @@ func (p *DB) GetMonthClearingWithTimeSpan(uid string, start int64, end int64)(*[
 
 func (p *DB) GetClearingRecord(id string) (*MonthlyClearing, error){
 	var record MonthlyClearing
+	log.Printf("GetClearingRecord from %s \n", id)
 	err := p.clearing.Find(bson.M{"id": id}).One(&record)
 	if err != nil {
 		return nil, errors.New(ankr_default.DbError+err.Error())
 	}
+
+	log.Printf("GetClearingRecord record %+v \n", record)
 	return &record, nil
 
 }

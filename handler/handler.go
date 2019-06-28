@@ -427,15 +427,16 @@ func (p *Handler) InvoiceDetail(ctx context.Context, req *dcmgr.InvoiceDetailReq
 	rsp := &dcmgr.FeesDetailResponse{}
 
     invoice_id := req.InvoiceId
+	log.Printf("InvoiceDetail for invoiceid  %s \n", invoice_id)
     record, error := p.db.GetClearingRecord(invoice_id)
 
     if error != nil {
-		log.Printf("MonthFeesDetail error %s \n", error.Error())
+		log.Printf("InvoiceDetail error %s \n", error.Error())
 		return  rsp, nil
 	}
 
     if record.UID != req.Uid {
-		log.Printf("MonthFeesDetail error Uid[%s] !=  record's Uid [%s] \n", req.Uid, record.UID)
+		log.Printf("InvoiceDetail error Uid[%s] !=  record's Uid [%s] \n", req.Uid, record.UID)
 		return  rsp, nil
 	}
 
