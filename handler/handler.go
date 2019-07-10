@@ -251,6 +251,8 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 	now := time.Now()
 	currentLocation := now.UTC().Location()
 
+
+
 	if len(req.Uid) == 0 {
 		log.Printf("error for MonthFeesDetail, uid is empty")
 		return rsp, nil
@@ -259,6 +261,10 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 	if len(req.Month) == 0 {
 		return p.CacluateCurrentMonthFees(req.Uid)
 	}
+
+	currentYear, currentMonth, _ := now.Date()
+
+
 
 
 	s := strings.Split(req.Month, "-")
@@ -270,8 +276,14 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 	year , _ := strconv.Atoi(s[0])
 	month , _ := strconv.Atoi(s[1])
 
+
+	firstOfCurrentMonth := time.Date(currentYear,  currentMonth , 01, 0, 0, 0, 0, currentLocation)
 	firstOfMonth := time.Date(year,  time.Month(month) , 01, 0, 0, 0, 0, currentLocation)
 	firstOfMonthTimeStamp := firstOfMonth.Unix()
+
+	if firstOfCurrentMonth ==  firstOfMonth {
+		return p.CacluateCurrentMonthFees(req.Uid)
+	}
 
 	log.Printf("year %d  month %d timestamp %d  \n", year, month , firstOfMonthTimeStamp)
 
