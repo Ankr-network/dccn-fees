@@ -40,7 +40,7 @@ type UsageRecord struct {
 
 func CalculateFees(usage *UsageRecord) int32{
 	reserveFees := float64(usage.CpuTotal) * 0.01  + float64(usage.MemoryTotal) * 0.01 + float64(usage.StorageTotal)  * 0.01
-	usedFees := float64(usage.CpuTotal) * 0.02  + float64(usage.MemoryUsed) * 0.02 + float64(usage.StorageUsed)  * 0.02
+	usedFees := float64(usage.CpuUsed) * 0.02  + float64(usage.MemoryUsed) * 0.02 + float64(usage.StorageUsed)  * 0.02
 	return int32(reserveFees + usedFees)
 }
 
