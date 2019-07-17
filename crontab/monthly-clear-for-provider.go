@@ -86,7 +86,7 @@ func main() {
 	}
 
 
-	list, _  := dccn_fees.GetMonthFeesWithTimeSpan(start, end)
+	list, _  := dccn_fees.GetMonthFeesWithTimeSpanForPrivder(start, end)
 
 	records := make(map[string]*dbservice.MonthlyClearing, 0)
 
@@ -146,7 +146,7 @@ func main() {
 		v.Total = v.Charge
 
 		v.ID = getAvailableID()
-		v.UserType = dbservice.ClusterUser
+		v.UserType = dbservice.ClusterProvider
 		dccn_fees.InsertMonthlyClearing(v)
 	}
 

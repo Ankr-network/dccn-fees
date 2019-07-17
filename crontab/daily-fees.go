@@ -244,7 +244,7 @@ func main() {
 
 				now := time.Now().Unix()
 				r.CreateDate = &timestamp.Timestamp{Seconds: now}
-				r.Date = namespaceFees.Date
+				r.Date = namespaceFees.Date     // date   = start
 				r.UserType = dbservice.ClusterProvider
 				r.CreateDate = namespaceFees.CreateDate
 

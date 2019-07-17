@@ -13,6 +13,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o cmd/fees main.go
 RUN echo '0 2 * * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/daily-fees.go  >>/var/log/daily.log & ' >> /etc/crontabs/root
 RUN echo '0 3 1 * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/monthly-fees.go  >>/var/log/monthly.log & ' >> /etc/crontabs/root
 RUN echo '0 4 1 * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/monthly-clear.go  >>/var/log/monthly_clear.log & ' >> /etc/crontabs/root
+RUN echo '1 3 1 * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/monthly-fees-for-provider.go  >>/var/log/monthly_for_provider.log & ' >> /etc/crontabs/root
+RUN echo '1 4 1 * * go run /go/src/github.com/Ankr-network/dccn-fees/crontab/monthly-clear-for-provider.go  >>/var/log/monthly_clear_for_provider.log & ' >> /etc/crontabs/root
+
 
 COPY dockerfile/wrapper_script.sh wrapper_script.sh
 

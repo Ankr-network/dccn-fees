@@ -119,8 +119,8 @@ func main() {
 		v.Usage.CpuUsed += v.Usage.CpuUsed/v.Count
 		v.Usage.MemoryUsed += v.Usage.MemoryUsed/v.Count
 		v.Usage.StorageUsed += v.Usage.StorageUsed/v.Count
-		v.UserType = dbservice.ClusterUser
 
+		v.UserType = dbservice.ClusterProvider
 	   dccn.InsertMonthlyFees(v)
 	}
 

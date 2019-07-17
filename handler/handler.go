@@ -47,7 +47,7 @@ func (p *Handler) ClusterDashBoard(
 
 	rsp := &dcmgr.DashBoardResponse{}
 	rsp.CurrentUsage = &dcmgr.Usage{}
-	rsp.TotalIncome = -int32(p.db.GetTotalIncome(uid))
+	rsp.TotalIncome = -int32(p.db.GetTotalIncomeForProvider(uid))
 	log.Printf("total income %d  for user [%s] \n", rsp.TotalIncome, uid)
 	cluster, error := p.db.GetClusterByUserID(uid)
 
@@ -89,7 +89,7 @@ func (p *Handler) ClusterDashBoard(
 	log.Printf("start %s  %d end  %s %d \n", startFirstDayOf7Days, start, endLastDayOf7Days, end)
 
 	rsp.Week = make([]*dcmgr.Income, 0)
-	if list, err := p.db.GetDailyFees(uid,start,end); err != nil {
+	if list, err := p.db.GetDailyFeesForProvider(uid,start,end); err != nil {
 		log.Println(err.Error())
 		log.Println("DataCenterList failure")
 		return nil, err
@@ -126,7 +126,7 @@ func (p *Handler) ClusterDashBoard(
 	log.Printf("start %s  %d end  %s %d \n", startFirstDayOf7Days, start, endLastDayOf7Days, end)
 
 	rsp.Month = make([]*dcmgr.Income, 0)
-	if list, err := p.db.GetDailyFees(uid,start,end); err != nil {
+	if list, err := p.db.GetDailyFeesForProvider(uid,start,end); err != nil {
 		log.Println(err.Error())
 		log.Println("DataCenterList failure")
 		return nil, err
@@ -165,7 +165,7 @@ func (p *Handler) ClusterDashBoard(
 	log.Printf("start %s  %d end  %s %d \n", startFirstDayOf1year, start, endLastDayOf1year, end)
 
 	rsp.Year = make([]*dcmgr.Income, 0)
-	if list, err := p.db.GetMonthlyFees(uid,start,end); err != nil {
+	if list, err := p.db.GetMonthlyFeesForProvider(uid,start,end); err != nil {
 		log.Println(err.Error())
 		log.Println("DataCenterList failure")
 		return nil, err
@@ -224,7 +224,7 @@ func (p *Handler) UserHistoryFeesList(ctx context.Context, req *dcmgr.HistoryFee
 
 
 
-	records, error := p.db.GetMonthClearingWithTimeSpan(req.Uid, startTimeStamp, endTimeStamp)
+	records, error := p.db.GetMonthClearingWithTimeSpanForUser(req.Uid, startTimeStamp, endTimeStamp)
 
 	if error != nil {
 		log.Printf("UserHistoryFeesList error %s \n", error.Error())
@@ -288,7 +288,7 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 	log.Printf("year %d  month %d timestamp %d  \n", year, month , firstOfMonthTimeStamp)
 
 	log.Printf("uid %s %d \n", req.Uid, firstOfMonthTimeStamp)
-	record, error := p.db.GetMonthlyClearing(req.Uid, firstOfMonthTimeStamp)
+	record, error := p.db.GetMonthlyClearingForUser(req.Uid, firstOfMonthTimeStamp)
 
 
 
@@ -440,7 +440,7 @@ func (p *Handler) InvoiceDetail(ctx context.Context, req *dcmgr.InvoiceDetailReq
 
     invoice_id := req.InvoiceId
 	log.Printf("InvoiceDetail for invoiceid  %s \n", invoice_id)
-    record, error := p.db.GetClearingRecord(invoice_id)
+    record, error := p.db.GetClearingRecordForUser(invoice_id)
 
     if error != nil {
 		log.Printf("InvoiceDetail error %s \n", error.Error())
