@@ -455,7 +455,7 @@ func (p *DB) GetMonthFeesWithTimeSpanForProvider(start int64, end int64)(*[]*Mon
 
 
 func (p *DB)GetTotalIncomeForProvider(uid string) int {
-	pipe := p.daily.Pipe([]bson.M{bson.M{"$match": bson.M{"uid": uid, "usertype" : ClusterUser}},bson.M{"$group": bson.M{"_id": "$uid",
+	pipe := p.daily.Pipe([]bson.M{bson.M{"$match": bson.M{"uid": uid, "usertype" : ClusterProvider}},bson.M{"$group": bson.M{"_id": "$uid",
 		 "total": bson.M{"$sum": "$fees"}}}})
 	resp := []bson.M{}
 	iter := pipe.Iter()
