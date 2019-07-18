@@ -38,10 +38,32 @@ type UsageRecord struct {
 	Start                int64
 }
 
+
+
+
 func CalculateFees(usage *UsageRecord) int32{
-	reserveFees := float64(usage.CpuTotal) * 0.01  + float64(usage.MemoryTotal) * 0.01 + float64(usage.StorageTotal)  * 0.01
-	usedFees := float64(usage.CpuUsed) * 0.02  + float64(usage.MemoryUsed) * 0.02 + float64(usage.StorageUsed)  * 0.02
-	return int32(reserveFees + usedFees)
+	//reserveFees := float64(usage.CpuTotal) * 0.01  + float64(usage.MemoryTotal) * 0.01 + float64(usage.StorageTotal)  * 0.01
+
+	 //  fees table (monthly)
+	 //                CPU      Memory(G)      Storage   total
+	 // aws($)         13       1              0.1
+	 //  current        7       0.5            0.05
+	 // 1CPU/2/51.2     7       1              2.5        11.5
+	 // 2CPU/4/100     14       2              5          21
+	 // 4/8/100        28       4              5          37
+	 // 6/16/400       42       8              20          70
+
+	feesForCPUPerHour :=  0.009722  // 7/720
+	feesForMemoryPerHour :=  0.0006944  // 0.5 /720
+	feesForStoragePerHour := 0.00006944  // 0.05/720
+
+	usedFees := float64(usage.CpuTotal/1000) * float64(usage.CpuUsed/3600) * feesForCPUPerHour +
+		        float64(usage.MemoryTotal/2048) * float64(usage.MemoryUsed/3600) * feesForMemoryPerHour +
+		        float64(usage.StorageTotal/51200) * float64(usage.StorageUsed/3600) * feesForStoragePerHour
+
+	log.Printf("calculate fees %f => %d  base one CPU usage %d and cpuTotal %d , memory %d  %d , disk %d %d\n",
+		usedFees,int32(usedFees), usage.CpuUsed, usage.CpuTotal, usage.MemoryUsed, usage.MemoryTotal, usage.StorageUsed, usage.StorageTotal)
+	return int32(usedFees)
 }
 
 
@@ -168,9 +190,9 @@ func main() {
 				//value.CpuTotal = int32(record.CPU)
 				//value.MemoryTotal = int32(record.Mem)
 				//value.StorageTotal = int32(record.Disk)
-				value.CpuUsed += int32(record.CPUUsed)
-				value.MemoryUsed += int32(record.MemUsed)
-				value.StorageUsed += int32(record.DiskUsed)
+				value.CpuUsed += int32(record.CPUUsedTime)
+				value.MemoryUsed += int32(record.MemUsedTime)
+				value.StorageUsed += int32(record.DiskUsedTime)
 				value.Count += 1
 			} else {
 
@@ -181,9 +203,9 @@ func main() {
 				r.CpuTotal = int32(record.CPU)
 				r.MemoryTotal = int32(record.Mem)
 				r.StorageTotal = int32(record.Disk)
-				r.CpuUsed = int32(record.CPUUsed)
-				r.MemoryUsed = int32(record.MemUsed)
-				r.StorageUsed = int32(record.DiskUsed)
+				r.CpuUsed = int32(record.CPUUsedTime)
+				r.MemoryUsed = int32(record.MemUsedTime)
+				r.StorageUsed = int32(record.DiskUsedTime)
 				r.Count = 1
 				r.Start = start
 

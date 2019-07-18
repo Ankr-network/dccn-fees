@@ -86,7 +86,7 @@ func main() {
 	}
 
 
-	list, _  := dccn_fees.GetMonthFeesWithTimeSpanForPrivder(start, end)
+	list, _  := dccn_fees.GetMonthFeesWithTimeSpanForProvider(start, end)
 
 	records := make(map[string]*dbservice.MonthlyClearing, 0)
 
