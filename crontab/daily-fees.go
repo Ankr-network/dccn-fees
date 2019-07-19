@@ -61,6 +61,9 @@ func CalculateFees(usage *UsageRecord) int32{
 		        float64(usage.MemoryTotal/2048) * float64(usage.MemoryUsed/3600) * feesForMemoryPerHour +
 		        float64(usage.StorageTotal/51200) * float64(usage.StorageUsed/3600) * feesForStoragePerHour
 
+	// change unit from dollar to cent
+	usedFees = usedFees * 100
+
 	log.Printf("calculate fees %f => %d  base one CPU usage %d and cpuTotal %d , memory %d  %d , disk %d %d\n",
 		usedFees,int32(usedFees), usage.CpuUsed, usage.CpuTotal, usage.MemoryUsed, usage.MemoryTotal, usage.StorageUsed, usage.StorageTotal)
 	return int32(usedFees)
@@ -228,9 +231,9 @@ func main() {
 		clusersRecords := make(map[string]*dbservice.DailyFeesRecord, 0)
 
 		for _, v := range records {
-			v.CpuUsed = v.CpuUsed/v.Count
-			v.MemoryUsed = v.MemoryUsed/v.Count
-			v.StorageUsed = v.StorageUsed/v.Count
+			v.CpuUsed = v.CpuUsed
+			v.MemoryUsed = v.MemoryUsed
+			v.StorageUsed = v.StorageUsed
 			fmt.Printf("user insert ##### %+v \n", v)
 			namespaceFees := CalcuateFeesAndSaveToDataBase(v)
 
