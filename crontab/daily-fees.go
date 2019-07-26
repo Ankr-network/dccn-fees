@@ -45,7 +45,7 @@ func CalculateFees(usage *UsageRecord) int32{
 	//reserveFees := float64(usage.CpuTotal) * 0.01  + float64(usage.MemoryTotal) * 0.01 + float64(usage.StorageTotal)  * 0.01
 
 	 //  fees table (monthly)
-	 //                CPU      Memory(G)      Storage   total
+	 //                CPU      Memory(G)      Storage(G)   total
 	 // aws($)         13       1              0.1
 	 //  current        7       0.5            0.05
 	 // 1CPU/2/51.2     7       1              2.5        11.5
@@ -58,8 +58,11 @@ func CalculateFees(usage *UsageRecord) int32{
 	feesForStoragePerHour := 0.00006944  // 0.05/720
 
 	usedFees := float64(usage.CpuTotal/1000) * float64(usage.CpuUsed/3600) * feesForCPUPerHour +
-		        float64(usage.MemoryTotal/2048) * float64(usage.MemoryUsed/3600) * feesForMemoryPerHour +
-		        float64(usage.StorageTotal/51200) * float64(usage.StorageUsed/3600) * feesForStoragePerHour
+		        float64(usage.MemoryTotal/1024) * float64(usage.MemoryUsed/3600) * feesForMemoryPerHour +
+		        float64(usage.StorageTotal/1024) * float64(usage.StorageUsed/3600) * feesForStoragePerHour
+
+	// change unit from dollar to cent
+	usedFees = usedFees * 100
 
 	// change unit from dollar to cent
 	usedFees = usedFees * 100
