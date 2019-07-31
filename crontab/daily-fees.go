@@ -64,9 +64,6 @@ func CalculateFees(usage *UsageRecord) int32{
 	// change unit from dollar to cent
 	usedFees = usedFees * 100
 
-	// change unit from dollar to cent
-	usedFees = usedFees * 100
-
 	log.Printf("calculate fees %f => %d  base one CPU usage %d and cpuTotal %d , memory %d  %d , disk %d %d\n",
 		usedFees,int32(usedFees), usage.CpuUsed, usage.CpuTotal, usage.MemoryUsed, usage.MemoryTotal, usage.StorageUsed, usage.StorageTotal)
 	return int32(usedFees)
