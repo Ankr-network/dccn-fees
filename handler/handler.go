@@ -96,10 +96,11 @@ func (p *Handler) ClusterDashBoard(
 	} else {
 		log.Printf("week records  count: %d \n",len(*list))
 		for _, record :=range *list {
+			log.Printf("print daily record %+v \n", record)
             income := dcmgr.Income{}
             income.Usage = &dcmgr.Usage{}
 			income.Income = -record.Fees
-			income.Date = record.CreateDate
+			income.Date = &timestamp.Timestamp{Seconds: record.Date}
 
 			income.Usage.CpuTotal = record.Usage.CpuTotal
 			income.Usage.CpuUsed = record.Usage.CpuUsed
@@ -137,7 +138,7 @@ func (p *Handler) ClusterDashBoard(
 			income := dcmgr.Income{}
 			income.Usage = &dcmgr.Usage{}
 			income.Income = -record.Fees
-			income.Date = record.CreateDate
+			income.Date = &timestamp.Timestamp{Seconds: record.Date}
 
 			income.Usage.CpuTotal = record.Usage.CpuTotal
 			income.Usage.CpuUsed = record.Usage.CpuUsed
@@ -176,7 +177,8 @@ func (p *Handler) ClusterDashBoard(
 			income := dcmgr.Income{}
 			income.Usage = &dcmgr.Usage{}
 			income.Income = -record.Fees
-			income.Date = record.CreateDate
+
+			income.Date = &timestamp.Timestamp{Seconds: record.Month}
 
 			income.Usage.CpuTotal = record.Usage.CpuTotal
 			income.Usage.CpuUsed = record.Usage.CpuUsed
