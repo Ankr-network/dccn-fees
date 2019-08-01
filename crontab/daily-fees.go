@@ -223,9 +223,9 @@ func main() {
 
 			if ok {
 
-				value.Usage.CpuUsed += namespaceFees.Usage.CpuUsed
-				value.Usage.MemoryUsed += namespaceFees.Usage.MemoryUsed
-				value.Usage.StorageUsed += namespaceFees.Usage.StorageUsed
+				value.Usage.CpuUsed += namespaceFees.Usage.CpuTotal   // cluster used cup = sum of all namespace total cpu
+				value.Usage.MemoryUsed += namespaceFees.Usage.MemoryTotal // used memory = sum of namespace total memory
+				value.Usage.StorageUsed += namespaceFees.Usage.StorageTotal // used storage = sum of namespace total storage
 				value.Fees += namespaceFees.Fees
 				//			value.Count ++
 
@@ -233,9 +233,9 @@ func main() {
 
 				r := dbservice.DailyFeesRecord{}
 				usage := dbservice.Usage{}
-				usage.CpuUsed = namespaceFees.Usage.CpuUsed
-				usage.MemoryUsed = namespaceFees.Usage.MemoryUsed
-				usage.StorageUsed = namespaceFees.Usage.StorageUsed
+				usage.CpuUsed = namespaceFees.Usage.CpuTotal
+				usage.MemoryUsed = namespaceFees.Usage.MemoryTotal
+				usage.StorageUsed = namespaceFees.Usage.StorageTotal
 				r.Usage = usage
 				r.Fees = namespaceFees.Fees
 				r.ClusterId = namespaceFees.ClusterId
