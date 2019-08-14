@@ -41,6 +41,8 @@ type Metrics struct {
 	NetworkIO     int64 // No data
 }
 
+
+// this api for cluster provider dashboard
 func (p *Handler) ClusterDashBoard(
 	ctx context.Context, req *dcmgr.DashBoardRequest) (*dcmgr.DashBoardResponse, error) {
 	uid := req.Uid
@@ -226,7 +228,7 @@ func (p *Handler) UserHistoryFeesList(ctx context.Context, req *dcmgr.HistoryFee
 
 
 
-	records, error := p.db.GetMonthClearingWithTimeSpanForUser(req.Uid, startTimeStamp, endTimeStamp)
+	records, error := p.db.GetMonthClearingWithTimeSpanForUser(req.TeamId, startTimeStamp, endTimeStamp)
 
 	if error != nil {
 		log.Printf("UserHistoryFeesList error %s \n", error.Error())
@@ -255,13 +257,13 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 
 
 
-	if len(req.Uid) == 0 {
-		log.Printf("error for MonthFeesDetail, uid is empty")
+	if len(req.TeamId) == 0 {
+		log.Printf("error for MonthFeesDetail, teamId is empty")
 		return rsp, nil
 	}
 
 	if len(req.Month) == 0 {
-		return p.CacluateCurrentMonthFees(req.Uid)
+		return p.CacluateCurrentMonthFees(req.TeamId)
 	}
 
 	currentYear, currentMonth, _ := now.Date()
@@ -284,20 +286,20 @@ func (p *Handler) MonthFeesDetail(ctx context.Context, req *dcmgr.FeesDetailRequ
 	firstOfMonthTimeStamp := firstOfMonth.Unix()
 
 	if firstOfCurrentMonth ==  firstOfMonth {
-		return p.CacluateCurrentMonthFees(req.Uid)
+		return p.CacluateCurrentMonthFees(req.TeamId)
 	}
 
 	log.Printf("year %d  month %d timestamp %d  \n", year, month , firstOfMonthTimeStamp)
 
-	log.Printf("uid %s %d \n", req.Uid, firstOfMonthTimeStamp)
-	record, error := p.db.GetMonthlyClearingForUser(req.Uid, firstOfMonthTimeStamp)
+	log.Printf("uid %s %d \n", req.TeamId, firstOfMonthTimeStamp)
+	record, error := p.db.GetMonthlyClearingForUser(req.TeamId, firstOfMonthTimeStamp)
 
 
 
 	if error == nil {
 		rsp.Start = strconv.FormatInt(record.Start.Seconds, 10)
 		rsp.End = strconv.FormatInt(record.End.Seconds, 10)
-		rsp.Account = record.UID
+		rsp.Account = record.TeamID
 		rsp.Attn = record.Name
 		rsp.Credits = record.Credit
 		rsp.InvoiceNumber = record.ID
@@ -363,7 +365,7 @@ func (p *Handler) CacluateCurrentMonthFees(uid string)(*dcmgr.FeesDetailResponse
 			r.Namespace = record.Namespace
 			r.UserType = record.UserType
 			r.Month = start
-			r.UID = record.UID
+			r.TeamID = record.TeamID
 			r.Fees = record.Fees
 			r.Count = 1
 
@@ -386,7 +388,7 @@ func (p *Handler) CacluateCurrentMonthFees(uid string)(*dcmgr.FeesDetailResponse
 	r.Start =   &timestamp.Timestamp{Seconds: start}
 	r.End =  &timestamp.Timestamp{Seconds: end}
 	r.PaidDate = &timestamp.Timestamp{Seconds: 0}
-	r.UID = uid
+	r.TeamID = uid
 	if user != nil {
 		r.Name = user.Name
 	}
@@ -419,7 +421,7 @@ func (p *Handler) CacluateCurrentMonthFees(uid string)(*dcmgr.FeesDetailResponse
 
 	rsp.Start = strconv.FormatInt(r.Start.Seconds, 10)
 	rsp.End = strconv.FormatInt(r.End.Seconds, 10)
-	rsp.Account = r.UID
+	rsp.Account = r.TeamID
 	rsp.Attn = r.Name
 	rsp.Credits = r.Credit
 	rsp.InvoiceNumber = r.ID
@@ -449,15 +451,15 @@ func (p *Handler) InvoiceDetail(ctx context.Context, req *dcmgr.InvoiceDetailReq
 		return  rsp, nil
 	}
 
-    if record.UID != req.Uid {
-		log.Printf("InvoiceDetail error Uid[%s] !=  record's Uid [%s] \n", req.Uid, record.UID)
+    if record.TeamID != req.TeamId {
+		log.Printf("InvoiceDetail error teamid[%s] !=  record's teamid [%s] \n", req.TeamId, record.TeamID)
 		return  rsp, nil
 	}
 
-	if error == nil && record.UID == req.Uid {
+	if error == nil && record.TeamID == req.TeamId {
 		rsp.Start = strconv.FormatInt(record.Start.Seconds, 10)
 		rsp.End = strconv.FormatInt(record.End.Seconds, 10)
-		rsp.Account = record.UID
+		rsp.Account = record.TeamID
 		rsp.Attn = record.Name
 		rsp.Credits = record.Credit
 		rsp.InvoiceNumber = record.ID

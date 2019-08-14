@@ -70,11 +70,8 @@ func CalcuateFeesAndSaveToDataBase(usage *UsageRecord) *dbservice.DailyFeesRecor
 	ns, _ := nccn_db.GetNamespace(usage.namespace)
 	// log.Printf("search ns %+v \n", ns)
 
-	ns.UID = ns.UID
-	ns.ClusterID = ns.ClusterID
-
 	record := dbservice.DailyFeesRecord{}
-	record.UID = ns.UID
+	record.TeamID = ns.TeamID
 	record.ClusterId = ns.ClusterID
 	record.UserType = dbservice.ClusterUser
 
@@ -274,7 +271,7 @@ func main() {
 				v.Usage.CpuTotal = int32(metrics.TotalCPU)
 				v.Usage.MemoryTotal = int32(metrics.TotalMemory)
 				v.Usage.StorageTotal = int32(metrics.TotalStorage)
-				v.UID = cluster.UserId
+				v.TeamID = cluster.TeamID
 
 			}
 

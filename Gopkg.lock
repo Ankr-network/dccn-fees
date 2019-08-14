@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "develop"
-  digest = "1:ad9d8057d33d9489758859caad2c9352fc193c23a18ccf614a930e8e0dccbcdd"
+  digest = "1:f93233013c40b95bc32211d84e867cc2b7345057605fe0d46730e2acaede665c"
   name = "github.com/Ankr-network/dccn-common"
   packages = [
     "ankr-micro",
@@ -13,7 +13,7 @@
     "protos/dcmgr/v1/grpc",
   ]
   pruneopts = "UT"
-  revision = "c6a667db8f7714966358b148e050d248a8903cdc"
+  revision = "2528591e4e31c167ee6fa4d9f0d6ca8dfe2ec25f"
 
 [[projects]]
   digest = "1:7ade0e7351787347d3dd3456abb365fd71ea75c19a859505e6a427064e1f9e42"
@@ -48,7 +48,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d2aa096fe6b539afe74dd6ab8e9a160304707f1477b01c637b4bbe20d262a25c"
+  digest = "1:082ed090a1aedec21b660263f98f72582e431b56e8e27b88cc00faa1510fde14"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -60,15 +60,15 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "ca1201d0de80cfde86cb01aea620983605dfe99b"
+  revision = "74dc4d7220e7acc4e100824340f3e66577424772"
 
 [[projects]]
   branch = "master"
-  digest = "1:4a2a181f5861b29bf885cc45ade5e9273cceb85fe6e6e3162310a6b6b5771dbc"
+  digest = "1:47844666be86089349a441f5f0ece22f42a87a8cb8c9a31294c593f43209ad19"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "1393eb0183657fb29200106b17a5042ec6e48dbe"
+  revision = "fde4db37ae7ad8191b03d30d27f258b5291ae4e3"
 
 [[projects]]
   digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
@@ -101,10 +101,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "c506a9f9061087022822e8da603a52fc387115a8"
+  revision = "fa694d86fc64c7654a660f8908de4e879866748d"
 
 [[projects]]
-  digest = "1:89eba2efa76562459d64d23c595954cfb3531b05a2970ca94253b6dc316a8e71"
+  digest = "1:4f01d2d6492b8926086b09690d0d64244d90ebc6dee6cf3c2277431b78709989"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -144,8 +144,8 @@
     "tap",
   ]
   pruneopts = "UT"
-  revision = "045159ad57f3781d409358e3ade910a018c16b30"
-  version = "v1.22.1"
+  revision = "6eaf6f47437a6b4e2153a190160ef39a92c7eceb"
+  version = "v1.23.0"
 
 [[projects]]
   branch = "v2"
