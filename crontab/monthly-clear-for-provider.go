@@ -94,17 +94,17 @@ func main() {
 
 	for _, record :=range *list {
 
-        uid := record.UID
+        teamId := record.TeamID
 
 
-		log.Printf("process uid fees %s ", uid)
+		log.Printf("process uid team id <%s> ", teamId)
 
-        if len(uid) == 0 {
-        	log.Printf("uid is empty \n")
+        if len(teamId) == 0 {
+        	log.Printf("teamId is empty \n")
         	continue
 		}
 
-		value, ok := records[uid]
+		value, ok := records[teamId]
 
 		if ok {
 			value.Namespace[record.Namespace] = record.Fees
@@ -113,7 +113,7 @@ func main() {
 		} else {
 			now := time.Now()
             //log.Printf("process uid %s \n", record.UID)
-			user, error := dccn_fees.GetUser(record.UID)
+			team, error := dccn_fees.GetTeam(record.TeamID)
 
 			if error != nil {
 				continue
@@ -129,12 +129,12 @@ func main() {
 			r.Start =   &timestamp.Timestamp{Seconds: start}
 			r.End =  &timestamp.Timestamp{Seconds: end}
 			r.PaidDate = &timestamp.Timestamp{Seconds: 0}
-			r.UID = record.UID
-			r.Name = user.Name
+			r.TeamID = record.TeamID
+			r.Name = team.Name
 			r.Charge = record.Fees
 			r.Status = dbservice.UnPaid
 
-			records[uid] = &r
+			records[teamId] = &r
 		}
 	}
 

@@ -41,7 +41,7 @@ func main() {
 	defer cancel()
 
 	// var userTasks []*common_proto.Task
-	if rsp, err := dcClient.UserHistoryFeesList(tokenContext, &dcmgr.HistoryFeesRequest{Uid:"b705e392-bb39-4ef2-8ec1-597c5b92ae42", Start:"2019-03-01",  End: "2019-07-01"}); err != nil {
+	if rsp, err := dcClient.UserHistoryFeesList(tokenContext, &dcmgr.HistoryFeesRequest{TeamId:"b705e392-bb39-4ef2-8ec1-597c5b92ae42", Start:"2019-03-01",  End: "2019-07-01"}); err != nil {
 		log.Fatal(err.Error())
 	} else {
 		fmt.Printf("UserHistoryFeesList %+v \n", rsp)

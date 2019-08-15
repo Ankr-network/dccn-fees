@@ -103,7 +103,7 @@ func main() {
 			r.Namespace = record.Namespace
 			r.UserType = record.UserType
 			r.Month = start
-			r.UID = record.UID
+			r.TeamID = record.TeamID
 			r.Fees = record.Fees
 			r.Count = 1
 

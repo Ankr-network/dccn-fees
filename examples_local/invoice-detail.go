@@ -41,7 +41,7 @@ func main() {
 	defer cancel()
 
 	// var userTasks []*common_proto.Task
-	if rsp, err := dcClient.InvoiceDetail(tokenContext, &dcmgr.InvoiceDetailRequest{Uid:"b705e392-bb39-4ef2-8ec1-597c5b92ae42", InvoiceId:"f7532f27"}); err != nil {
+	if rsp, err := dcClient.InvoiceDetail(tokenContext, &dcmgr.InvoiceDetailRequest{TeamId:"b705e392-bb39-4ef2-8ec1-597c5b92ae42", InvoiceId:"f7532f27"}); err != nil {
 		log.Fatal(err.Error())
 	} else {
 		fmt.Printf("MonthFeesDetail %+v \n", rsp)

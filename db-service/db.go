@@ -19,7 +19,7 @@ type DataCenterRecord struct {
 	DcStatus          common_proto.DCStatus
 	DcAttributes      *common_proto.DataCenterAttributes
 	DcHeartbeatReport *common_proto.DCHeartbeatReport
-	UserId            string
+	TeamID            string
 	Clientcert        string
 }
 type UserRecord struct {
@@ -28,34 +28,40 @@ type UserRecord struct {
 	Name  string `bson:"name"`
 }
 
+type TeamRecord struct {
+	ID    string `bson:"id"`
+	Name  string `bson:"name"`
+}
+
 type DBService interface {
 	GetUser(id string) (*UserRecord, error)
+	GetTeam(id string) (*TeamRecord, error)
 	GetCluser(id string) (*DataCenterRecord, error)
 	InsertDailyFees(record *DailyFeesRecord) error
 	InsertDailyFeesForClusterProvider(record *DailyFeesRecord) error
 	InsertMonthlyFees(record *MonthlyFeesRecord) error
 	InsertMonthlyClearing(record *MonthlyClearing) error
-	GetDailyFees(uid string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error)
-	GetDailyFeesForProvider(uid string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error)
-	GetMonthlyFees(uid string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error)
-	GetMonthlyFeesForProvider(uid string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error)
+	GetDailyFees(team_id string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error)
+	GetDailyFeesForProvider(team_id string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error)
+	GetMonthlyFees(team_id string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error)
+	GetMonthlyFeesForProvider(team_id string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error)
 	GetNamespace(namespaceId string) (*NamespaceRecord, error)
-	GetDailyFeesWithUidAndDate(uid string, date int64, namespace string) (*DailyFeesRecord, error)
-	GetDailyFeesWithUidAndDateForClusterProvider(uid string, date int64, clusterID string) (*DailyFeesRecord, error)
-	GetMonthlyClearing(uid string, date int64) (*MonthlyClearing, error)
-	GetMonthlyClearingForUser(uid string, date int64) (*MonthlyClearing, error) // only fees > 0
+	GetDailyFeesWithUidAndDate(team_id string, date int64, namespace string) (*DailyFeesRecord, error)
+	GetDailyFeesWithUidAndDateForClusterProvider(team_id string, date int64, clusterID string) (*DailyFeesRecord, error)
+	GetMonthlyClearing(team_id string, date int64) (*MonthlyClearing, error)
+	GetMonthlyClearingForUser(team_id string, date int64) (*MonthlyClearing, error) // only fees > 0
 	GetDailyFeesWithTimeSpan(start int64, end int64) (*[]*DailyFeesRecord, error)
 	GetDailyFeesWithTimeSpanForProvider(start int64, end int64) (*[]*DailyFeesRecord, error)
-	GetDailyFeesWithTimeSpanAndUid(uid string, start int64, end int64) (*[]*DailyFeesRecord, error)
+	GetDailyFeesWithTimeSpanAndUid(team_id string, start int64, end int64) (*[]*DailyFeesRecord, error)
 	GetMonthFeesWithTimeSpan(start int64, end int64) (*[]*MonthlyFeesRecord, error)
 	GetMonthFeesWithTimeSpanForProvider(start int64, end int64) (*[]*MonthlyFeesRecord, error)
-	GetMonthClearingWithTimeSpanForUser(uid string, start int64, end int64) (*[]*MonthlyClearing, error)
-	GetMonthClearingWithTimeSpanForProvider(uid string, start int64, end int64) (*[]*MonthlyClearing, error) // fees > 0
-	GetTotalIncomeForProvider(uid string) int
+	GetMonthClearingWithTimeSpanForUser(team_id string, start int64, end int64) (*[]*MonthlyClearing, error)
+	GetMonthClearingWithTimeSpanForProvider(team_id string, start int64, end int64) (*[]*MonthlyClearing, error) // fees > 0
+	GetTotalIncomeForProvider(team_id string) int
 	GetClearingRecord(id string) (*MonthlyClearing, error)
 	GetClearingRecordForUser(id string) (*MonthlyClearing, error) //fees > 0 for user
 	ConvertClearingStatus(status ClearingStatus) string
-	GetClusterByUserID(uid string) (*DataCenterRecord, error)
+	GetClusterByUserID(team_id string) (*DataCenterRecord, error)
 	Close()
 }
 
@@ -83,7 +89,7 @@ type Usage struct {
 }
 
 type DailyFeesRecord struct {
-	UID        string
+	TeamID     string
 	ClusterId  string
 	Namespace  string
 	Fees       int32 // cent of dollar
@@ -95,7 +101,7 @@ type DailyFeesRecord struct {
 }
 
 type MonthlyFeesRecord struct {
-	UID        string
+	TeamID     string
 	Namespace  string
 	Fees       int32 // cent of dollar
 	UserType   UserType
@@ -107,7 +113,7 @@ type MonthlyFeesRecord struct {
 
 type MonthlyClearing struct {
 	ID         string
-	UID        string
+	TeamID     string
 	Name       string
 	Namespace  map[string]int32
 	Total      int32 // cent of dollar
@@ -134,10 +140,10 @@ type DB struct {
 }
 
 type NamespaceRecord struct {
-	ID                   string // short hash of uid+name+cluster_id
+	ID                   string // short hash of team_id+name+cluster_id
 	Name                 string
 	NameUpdating         string
-	UID                  string
+	TeamID               string
 	ClusterID            string //id of cluster
 	ClusterName          string //name of cluster
 	LastModifiedDate     *timestamp.Timestamp
@@ -179,15 +185,15 @@ func (p *DB) Close() {
 // Create creates a new data center item if it not exists
 func (p *DB) InsertDailyFees(record *DailyFeesRecord) error {
 
-	if len(record.UID) == 0 {
-		log.Printf("InsertDailyFees error, uid does not exist.")
+	if len(record.TeamID) == 0 {
+		log.Printf("InsertDailyFees error, teamID does not exist.")
 		return nil
 	}
 
-	_, error := p.GetDailyFeesWithUidAndDate(record.UID, record.Date, record.Namespace)
+	_, error := p.GetDailyFeesWithUidAndDate(record.TeamID, record.Date, record.Namespace)
 	if error == nil { //exit old record
 		log.Printf("----> update record %+v \n", record)
-		return p.daily.Update(bson.M{"uid": record.UID, "date": record.Date, "namespace": record.Namespace},
+		return p.daily.Update(bson.M{"teamid": record.TeamID, "date": record.Date, "namespace": record.Namespace},
 			bson.M{"$set": record})
 
 	} else {
@@ -200,19 +206,19 @@ func (p *DB) InsertDailyFees(record *DailyFeesRecord) error {
 // Create creates a new data center item if it not exists
 func (p *DB) InsertDailyFeesForClusterProvider(record *DailyFeesRecord) error {
 
-	if len(record.UID) == 0 {
-		log.Printf("InsertDailyFees error, uid does not exist.")
+	if len(record.TeamID) == 0 {
+		log.Printf("InsertDailyFees error, team_id does not exist.")
 		return nil
 	}
 
-	_, error := p.GetDailyFeesWithUidAndDateForClusterProvider(record.UID, record.Date, record.ClusterId)
+	_, error := p.GetDailyFeesWithUidAndDateForClusterProvider(record.TeamID, record.Date, record.ClusterId)
 	if error == nil { //exit old record
-		log.Printf("----> update record %+v for uid %s \n", record, record.UID)
-		return p.daily.Update(bson.M{"uid": record.UID, "date": record.Date, "clusterid": record.ClusterId},
+		log.Printf("----> update record %+v for team_id %s \n", record, record.TeamID)
+		return p.daily.Update(bson.M{"teamid": record.TeamID, "date": record.Date, "clusterid": record.ClusterId},
 			bson.M{"$set": record})
 
 	} else {
-		log.Printf("----> insert record %+v for uid %s \n", record, record.UID)
+		log.Printf("----> insert record %+v for team_id %s \n", record, record.TeamID)
 		return p.daily.Insert(record)
 
 	}
@@ -220,11 +226,11 @@ func (p *DB) InsertDailyFeesForClusterProvider(record *DailyFeesRecord) error {
 
 // Create creates a new data center item if it not exists
 func (p *DB) InsertMonthlyFees(record *MonthlyFeesRecord) error {
-	_, error := p.GetMonthlyFeesUidAndDate(record.UID, record.Month, record.Namespace)
+	_, error := p.GetMonthlyFeesUidAndDate(record.TeamID, record.Month, record.Namespace)
 
 	if error == nil { //exit old record
 		log.Printf("----> update monthly record %+v \n", record)
-		return p.monthly.Update(bson.M{"uid": record.UID, "month": record.Month, "namespace": record.Namespace},
+		return p.monthly.Update(bson.M{"teamid": record.TeamID, "month": record.Month, "namespace": record.Namespace},
 			bson.M{"$set": record})
 
 	} else {
@@ -237,11 +243,11 @@ func (p *DB) InsertMonthlyFees(record *MonthlyFeesRecord) error {
 
 // Create creates a new data center item if it not exists
 func (p *DB) InsertMonthlyFeesForProvider(record *MonthlyFeesRecord) error {
-	_, error := p.GetMonthlyFeesUidAndDate(record.UID, record.Month, record.Namespace)
+	_, error := p.GetMonthlyFeesUidAndDate(record.TeamID, record.Month, record.Namespace)
 
 	if error == nil { //exit old record
 		log.Printf("----> update monthly record %+v \n", record)
-		return p.monthly.Update(bson.M{"uid": record.UID, "month": record.Month, "usertype": ClusterUser, "namespace": record.Namespace},
+		return p.monthly.Update(bson.M{"teamid": record.TeamID, "month": record.Month, "usertype": ClusterUser, "namespace": record.Namespace},
 			bson.M{"$set": record})
 
 	} else {
@@ -252,25 +258,25 @@ func (p *DB) InsertMonthlyFeesForProvider(record *MonthlyFeesRecord) error {
 
 }
 
-func (p *DB) GetMonthlyClearing(uid string, date int64) (*MonthlyClearing, error) {
+func (p *DB) GetMonthlyClearing(team_id string, date int64) (*MonthlyClearing, error) {
 	var record MonthlyClearing
-	if err := p.clearing.Find(bson.M{"uid": uid, "month": date}).One(&record); err != nil {
+	if err := p.clearing.Find(bson.M{"teamid": team_id, "month": date}).One(&record); err != nil {
 		return nil, err
 	}
 	return &record, nil
 
 }
 
-func (p *DB) GetMonthlyClearingForUser(uid string, date int64) (*MonthlyClearing, error) {
+func (p *DB) GetMonthlyClearingForUser(team_id string, date int64) (*MonthlyClearing, error) {
 	var record MonthlyClearing
-	if err := p.clearing.Find(bson.M{"uid": uid, "month": date, "usertype": ClusterUser}).One(&record); err != nil {
+	if err := p.clearing.Find(bson.M{"teamid": team_id, "month": date, "usertype": ClusterUser}).One(&record); err != nil {
 		return nil, err
 	}
 	return &record, nil
 }
 
 func (p *DB) InsertMonthlyClearing(record *MonthlyClearing) error {
-	r, error := p.GetMonthlyClearing(record.UID, record.Month)
+	r, error := p.GetMonthlyClearing(record.TeamID, record.Month)
 
 	if error == nil && r.Status == Paid {
 		return errors.New("can not change paid record")
@@ -278,7 +284,7 @@ func (p *DB) InsertMonthlyClearing(record *MonthlyClearing) error {
 
 	if error == nil { //exit old record
 		log.Printf("find record, can not insert clearing twice  %+v \n", record)
-		//return p.clearing.Update(bson.M{"uid": record.UID, "month": record.Month, "namespace": record.Namespace, "total": record.Total},
+		//return p.clearing.Update(bson.M{"teamid": record.TeamID, "month": record.Month, "namespace": record.Namespace, "total": record.Total},
 		//	bson.M{"$set": record})
 
 	} else {
@@ -290,10 +296,10 @@ func (p *DB) InsertMonthlyClearing(record *MonthlyClearing) error {
 	return nil
 }
 
-func (p *DB) GetDailyFees(uid string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error) {
-	log.Printf("GetDailyFees uid %s start %d end %d \n", uid, start_time, end_time)
+func (p *DB) GetDailyFees(team_id string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error) {
+	log.Printf("GetDailyFees team_id %s start %d end %d \n", team_id, start_time, end_time)
 	var list []*DailyFeesRecord
-	if err := p.daily.Find(bson.M{"uid": uid, "date": bson.M{
+	if err := p.daily.Find(bson.M{"teamid": team_id, "date": bson.M{
 		"$gte": start_time,
 		"$lt":  end_time,
 	}}).All(&list); err != nil {
@@ -303,10 +309,10 @@ func (p *DB) GetDailyFees(uid string, start_time int64, end_time int64) (*[]*Dai
 	return &list, nil
 }
 
-func (p *DB) GetDailyFeesForProvider(uid string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error) {
-	log.Printf("GetDailyFees uid %s start %d end %d \n", uid, start_time, end_time)
+func (p *DB) GetDailyFeesForProvider(team_id string, start_time int64, end_time int64) (*[]*DailyFeesRecord, error) {
+	log.Printf("GetDailyFees team_id %s start %d end %d \n", team_id, start_time, end_time)
 	var list []*DailyFeesRecord
-	if err := p.daily.Find(bson.M{"uid": uid, "usertype": ClusterProvider, "date": bson.M{
+	if err := p.daily.Find(bson.M{"teamid": team_id, "usertype": ClusterProvider, "date": bson.M{
 		"$gte": start_time,
 		"$lt":  end_time,
 	}}).All(&list); err != nil {
@@ -316,10 +322,10 @@ func (p *DB) GetDailyFeesForProvider(uid string, start_time int64, end_time int6
 	return &list, nil
 }
 
-func (p *DB) GetMonthlyFees(uid string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error) {
+func (p *DB) GetMonthlyFees(team_id string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error) {
 	var list []*MonthlyFeesRecord
 
-	if err := p.monthly.Find(bson.M{"uid": uid, "month": bson.M{
+	if err := p.monthly.Find(bson.M{"teamid": team_id, "month": bson.M{
 		"$gte": start_time,
 		"$lt":  end_time,
 	}}).All(&list); err != nil {
@@ -329,10 +335,10 @@ func (p *DB) GetMonthlyFees(uid string, start_time int64, end_time int64) (*[]*M
 	return &list, nil
 }
 
-func (p *DB) GetMonthlyFeesForProvider(uid string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error) {
+func (p *DB) GetMonthlyFeesForProvider(team_id string, start_time int64, end_time int64) (*[]*MonthlyFeesRecord, error) {
 	var list []*MonthlyFeesRecord
 
-	if err := p.monthly.Find(bson.M{"uid": uid,
+	if err := p.monthly.Find(bson.M{"teamid": team_id,
 		"usertype": ClusterProvider,
 		"month": bson.M{
 			"$gte": start_time,
@@ -344,26 +350,26 @@ func (p *DB) GetMonthlyFeesForProvider(uid string, start_time int64, end_time in
 	return &list, nil
 }
 
-func (p *DB) GetMonthlyFeesUidAndDate(uid string, date int64, namespace string) (*MonthlyFeesRecord, error) {
+func (p *DB) GetMonthlyFeesUidAndDate(team_id string, date int64, namespace string) (*MonthlyFeesRecord, error) {
 	var record MonthlyFeesRecord
-	if err := p.monthly.Find(bson.M{"uid": uid, "month": date, "namespace": namespace}).One(&record); err != nil {
+	if err := p.monthly.Find(bson.M{"teamid": team_id, "month": date, "namespace": namespace}).One(&record); err != nil {
 		return nil, err
 	}
 	return &record, nil
 }
 
-func (p *DB) GetDailyFeesWithUidAndDate(uid string, month int64, namespace string) (*DailyFeesRecord, error) {
+func (p *DB) GetDailyFeesWithUidAndDate(team_id string, month int64, namespace string) (*DailyFeesRecord, error) {
 	var record DailyFeesRecord
-	if err := p.daily.Find(bson.M{"uid": uid, "date": month, "namespace": namespace}).One(&record); err != nil {
+	if err := p.daily.Find(bson.M{"teamid": team_id, "date": month, "namespace": namespace}).One(&record); err != nil {
 		return nil, err
 	}
 
 	return &record, nil
 }
 
-func (p *DB) GetDailyFeesWithUidAndDateForClusterProvider(uid string, month int64, clusterID string) (*DailyFeesRecord, error) {
+func (p *DB) GetDailyFeesWithUidAndDateForClusterProvider(team_id string, month int64, clusterID string) (*DailyFeesRecord, error) {
 	var record DailyFeesRecord
-	if err := p.daily.Find(bson.M{"uid": uid, "date": month, "clusterid": clusterID}).One(&record); err != nil {
+	if err := p.daily.Find(bson.M{"teamid": team_id, "date": month, "clusterid": clusterID}).One(&record); err != nil {
 		return nil, err
 	}
 
@@ -400,9 +406,9 @@ func (p *DB) GetDailyFeesWithTimeSpanForProvider(start int64, end int64) (*[]*Da
 
 // this functon only for user spending which fees > 0
 
-func (p *DB) GetDailyFeesWithTimeSpanAndUid(uid string, start int64, end int64) (*[]*DailyFeesRecord, error) {
+func (p *DB) GetDailyFeesWithTimeSpanAndUid(team_id string, start int64, end int64) (*[]*DailyFeesRecord, error) {
 	var list []*DailyFeesRecord
-	if err := p.daily.Find(bson.M{"uid": uid,
+	if err := p.daily.Find(bson.M{"teamid": team_id,
 		"usertype": ClusterUser,
 		"fees":     bson.M{"$gte": 0},
 		"date": bson.M{
@@ -460,8 +466,8 @@ func (p *DB) GetMonthFeesWithTimeSpanForProvider(start int64, end int64) (*[]*Mo
 	return &list, nil
 }
 
-func (p *DB) GetTotalIncomeForProvider(uid string) int {
-	pipe := p.daily.Pipe([]bson.M{bson.M{"$match": bson.M{"uid": uid, "usertype": ClusterProvider}}, bson.M{"$group": bson.M{"_id": "$uid",
+func (p *DB) GetTotalIncomeForProvider(team_id string) int {
+	pipe := p.daily.Pipe([]bson.M{bson.M{"$match": bson.M{"teamid": team_id, "usertype": ClusterProvider}}, bson.M{"$group": bson.M{"_id": "$team_id",
 		"total": bson.M{"$sum": "$fees"}}}})
 	resp := []bson.M{}
 	iter := pipe.Iter()
@@ -481,6 +487,19 @@ func (p *DB) GetTotalIncomeForProvider(uid string) int {
 	return 0
 }
 
+
+
+// Get gets user item by email.
+func (p *DB) GetTeam(id string) (*TeamRecord, error) {
+	var record TeamRecord
+	err := p.user.Find(bson.M{"id": id}).One(&record)
+	if err != nil {
+		return nil, errors.New(ankr_default.DbError + err.Error())
+	}
+	return &record, nil
+}
+
+
 // Get gets user item by email.
 func (p *DB) GetUser(id string) (*UserRecord, error) {
 	var user UserRecord
@@ -491,10 +510,10 @@ func (p *DB) GetUser(id string) (*UserRecord, error) {
 	return &user, nil
 }
 
-func (p *DB) GetMonthClearingWithTimeSpanForUser(uid string, start int64, end int64) (*[]*MonthlyClearing, error) {
-	log.Printf("GetMonthClearingWithTimeSpan  uid %s start %d end %d \n", uid, start, end)
+func (p *DB) GetMonthClearingWithTimeSpanForUser(team_id string, start int64, end int64) (*[]*MonthlyClearing, error) {
+	log.Printf("GetMonthClearingWithTimeSpan  team_id %s start %d end %d \n", team_id, start, end)
 	var list []*MonthlyClearing
-	if err := p.clearing.Find(bson.M{"uid": uid, "usertype": ClusterUser, "month": bson.M{
+	if err := p.clearing.Find(bson.M{"teamid": team_id, "usertype": ClusterUser, "month": bson.M{
 		"$gte": start,
 		"$lt":  end,
 	}}).All(&list); err != nil {
@@ -504,10 +523,10 @@ func (p *DB) GetMonthClearingWithTimeSpanForUser(uid string, start int64, end in
 
 }
 
-func (p *DB) GetMonthClearingWithTimeSpanForProvider(uid string, start int64, end int64) (*[]*MonthlyClearing, error) {
-	log.Printf("GetMonthClearingWithTimeSpan  uid %s start %d end %d \n", uid, start, end)
+func (p *DB) GetMonthClearingWithTimeSpanForProvider(team_id string, start int64, end int64) (*[]*MonthlyClearing, error) {
+	log.Printf("GetMonthClearingWithTimeSpan  team_id %s start %d end %d \n", team_id, start, end)
 	var list []*MonthlyClearing
-	if err := p.clearing.Find(bson.M{"uid": uid, "usertype": ClusterProvider, "month": bson.M{
+	if err := p.clearing.Find(bson.M{"teamid": team_id, "usertype": ClusterProvider, "month": bson.M{
 		"$gte": start,
 		"$lt":  end,
 	}}).All(&list); err != nil {
@@ -552,10 +571,10 @@ func (p *DB) ConvertClearingStatus(status ClearingStatus) string {
 
 }
 
-func (p *DB) GetClusterByUserID(uid string) (*DataCenterRecord, error) {
+func (p *DB) GetClusterByUserID(team_id string) (*DataCenterRecord, error) {
 	var center DataCenterRecord
-	log.Printf("GetClusterByUserID uid %s \n", uid)
-	err := p.cluser.Find(bson.M{"userid": uid}).One(&center)
+	log.Printf("GetClusterByUserID team_id %s \n", team_id)
+	err := p.cluser.Find(bson.M{"userid": team_id}).One(&center)
 	if err != nil {
 		return nil, errors.New(ankr_default.DbError + err.Error())
 	}
