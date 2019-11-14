@@ -1,6 +1,10 @@
 FROM golang:1.13-alpine as builder
 
+# privaite repo go module
 RUN apk add --no-cache git dep openssh-client
+ARG	GITHUB_USER
+ARG	GITHUB_TOKEN
+RUN echo "machine github.com login ${GITHUB_USER} password ${GITHUB_TOKEN}" > ~/.netrc
 
 WORKDIR /go/src/github.com/Ankr-network/dccn-fees
 COPY . .
