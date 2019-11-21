@@ -13,7 +13,6 @@ import (
 
 var addr = "localhost:50051"
 
-
 func main() {
 
 	log.SetFlags(log.LstdFlags | log.Llongfile)
@@ -29,7 +28,6 @@ func main() {
 
 	dcClient := dcmgr.NewFeesServiceClient(conn)
 
-
 	md := metadata.New(map[string]string{
 		"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NTUwMTUzMTgsImp0aSI6IjQ4NTQ5YjQxLWUzNjYtNGIxMi05NTc3LTU0M2Y5NTE5Y2JlZiIsImlzcyI6ImFua3IubmV0d29yayJ9.A0p3KyxIKZHAZb_buPgadKj3d40Rlw_hSpsFBrNLjuw",
 	})
@@ -41,7 +39,7 @@ func main() {
 	defer cancel()
 
 	// var userTasks []*common_proto.Task
-	if rsp, err := dcClient.ClusterDashBoard(tokenContext, &dcmgr.DashBoardRequest{Uid:"57a50ca4-5799-42c2-aab2-a532ec8d6965"}); err != nil {
+	if rsp, err := dcClient.ClusterDashBoard(tokenContext, &dcmgr.DashBoardRequest{TeamId: "e76dddd7-b370-4748-8b1f-4cffefb82a78"}); err != nil {
 		log.Fatal(err.Error())
 	} else {
 		fmt.Printf("total income %d  days of one week %d \n", rsp.TotalIncome, len(rsp.Week))
@@ -49,7 +47,7 @@ func main() {
 			d := rsp.Week[i]
 			tm := time.Unix(d.Date.Seconds, 0)
 			layOut := "2006-01-02"
-			fmt.Printf("income  %d  cputotal %d  cpuused %d memey total %d  memey used %d data %s \n", d.Income, d.Usage.CpuTotal,d.Usage.CpuUsed, d.Usage.MemoryTotal, d.Usage.MemoryUsed, tm.Format(layOut))
+			fmt.Printf("income  %d  cputotal %d  cpuused %d memey total %d  memey used %d data %s \n", d.Income, d.Usage.CpuTotal, d.Usage.CpuUsed, d.Usage.MemoryTotal, d.Usage.MemoryUsed, tm.Format(layOut))
 		}
 
 		fmt.Printf("total income %d  days of one month %d \n", rsp.TotalIncome, len(rsp.Month))
@@ -58,7 +56,7 @@ func main() {
 			d := rsp.Month[i]
 			tm := time.Unix(d.Date.Seconds, 0)
 			layOut := "2006-01-02"
-			fmt.Printf("income  %d  cputotal %d  cpuused %d memey total %d  memey used %d data %s \n", d.Income, d.Usage.CpuTotal,d.Usage.CpuUsed, d.Usage.MemoryTotal, d.Usage.MemoryUsed, tm.Format(layOut))
+			fmt.Printf("income  %d  cputotal %d  cpuused %d memey total %d  memey used %d data %s \n", d.Income, d.Usage.CpuTotal, d.Usage.CpuUsed, d.Usage.MemoryTotal, d.Usage.MemoryUsed, tm.Format(layOut))
 		}
 
 		fmt.Printf("total income %d  days of one year %d \n", rsp.TotalIncome, len(rsp.Year))
@@ -66,7 +64,7 @@ func main() {
 			d := rsp.Year[i]
 			tm := time.Unix(d.Date.Seconds, 0)
 			layOut := "2006-01-02"
-			fmt.Printf("income  %d  cputotal %d  cpuused %d memey total %d  memey used %d data %s \n", d.Income, d.Usage.CpuTotal,d.Usage.CpuUsed, d.Usage.MemoryTotal, d.Usage.MemoryUsed, tm.Format(layOut))
+			fmt.Printf("income  %d  cputotal %d  cpuused %d memey total %d  memey used %d data %s \n", d.Income, d.Usage.CpuTotal, d.Usage.CpuUsed, d.Usage.MemoryTotal, d.Usage.MemoryUsed, tm.Format(layOut))
 		}
 
 	}

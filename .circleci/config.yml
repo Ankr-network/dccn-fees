@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       # Build in Python container to install AWS CLI
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.13
     working_directory: /go/src/github.com/Ankr-network/dccn-fees
     steps:
       - checkout
@@ -66,7 +66,7 @@ jobs:
 
 
             for((i=0; i<arrlen; i++)); do
-              docker build --build-arg APP_DOMAIN=${APP_DOMAIN} --no-cache -f "dockerfile"/${dockerfile_arr[$i]}.Dockerfile -t ${component_arr[$i]}:$BRANCH_NAME .
+              docker build --build-arg GITHUB_USER=$GITHUB_USER --build-arg GITHUB_TOKEN=$GITHUB_TOKEN --build-arg APP_DOMAIN=${APP_DOMAIN} --no-cache -f "dockerfile"/${dockerfile_arr[$i]}.Dockerfile -t ${component_arr[$i]}:$BRANCH_NAME .
               for TAG in $BRANCH_NAME $SHA1_SHORT $BRANCH_NAME$DATE; do
                 docker tag ${component_arr[$i]}:$BRANCH_NAME $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/${component_arr[$i]}:$TAG
                 docker push $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/${component_arr[$i]}:$TAG
@@ -88,3 +88,10 @@ jobs:
 
 
             kubectl apply -f  kubernetes/fees-svc.yml
+
+workflows:
+  version: 2
+  fees:
+    jobs:
+      - build:
+          context: cicd

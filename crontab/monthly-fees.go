@@ -103,7 +103,7 @@ func main() {
 			r.Namespace = record.Namespace
 			r.UserType = record.UserType
 			r.Month = start
-			r.UID = record.UID
+			r.TeamID = record.TeamID
 			r.Fees = record.Fees
 			r.Count = 1
 
@@ -119,6 +119,7 @@ func main() {
 		v.Usage.CpuUsed += v.Usage.CpuUsed/v.Count
 		v.Usage.MemoryUsed += v.Usage.MemoryUsed/v.Count
 		v.Usage.StorageUsed += v.Usage.StorageUsed/v.Count
+		v.UserType = dbservice.ClusterUser
 
 	   dccn.InsertMonthlyFees(v)
 	}
